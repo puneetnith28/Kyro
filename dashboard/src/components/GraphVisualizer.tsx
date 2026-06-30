@@ -10,7 +10,8 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, Network } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const getNodeStyle = (type: string) => {
   let baseStyle = {
@@ -97,14 +98,22 @@ export default function GraphVisualizer() {
   }, [timeTravelDays]);
 
   return (
-    <div className="w-full h-[600px] mt-8 relative glass-card rounded-2xl overflow-hidden border border-white/10 group">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full h-[600px] mt-8 relative glass-card rounded-2xl overflow-hidden border border-white/10 group"
+    >
       <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-zinc-900/80 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
         <Sparkles size={14} className="text-blue-400" />
         <span className="text-xs font-medium text-white tracking-wide uppercase">Kyro Brain</span>
       </div>
       
       {/* Time Machine UI */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-zinc-900/90 p-4 rounded-xl border border-white/10 backdrop-blur-md flex flex-col items-center gap-2 w-72 shadow-2xl">
+      <motion.div 
+        whileHover={{ scale: 1.02 }}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-zinc-900/90 p-4 rounded-xl border border-white/10 backdrop-blur-md flex flex-col items-center gap-2 w-72 shadow-2xl"
+      >
         <div className="flex justify-between w-full text-xs text-zinc-400 font-medium">
           <span>{timeTravelDays === 30 ? '30 Days Ago' : timeTravelDays > 0 ? `${timeTravelDays} Days Ago` : 'Live Now'}</span>
           <span className="text-blue-400">Time Machine</span>
@@ -118,14 +127,35 @@ export default function GraphVisualizer() {
           onChange={(e) => setTimeTravelDays(parseInt(e.target.value))}
           className="w-full accent-blue-500 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
         />
-      </div>
+      </motion.div>
       
-      <button 
+      <motion.button 
+        whileHover={{ scale: 1.1, rotate: 15 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => fetchGraph(timeTravelDays)}
-        className="absolute top-4 right-4 z-10 p-2 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-full border border-white/10 backdrop-blur-md transition-all shadow-sm"
+        className="absolute top-4 right-4 z-10 p-2 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-full border border-white/10 backdrop-blur-md transition-colors shadow-sm"
       >
         <RefreshCw size={14} className={loading ? 'animate-spin text-blue-400' : ''} />
-      </button>
+      </motion.button>
+
+      <AnimatePresence>
+        {!loading && nodes.length === 0 && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="absolute inset-0 z-0 flex flex-col items-center justify-center bg-zinc-900/50 backdrop-blur-sm"
+          >
+            <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 mb-6 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
+              <Network size={40} />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">Graph is Empty</h3>
+            <p className="text-zinc-400 max-w-md mx-auto text-center text-[15px] leading-relaxed">
+              Kyro hasn't captured any context yet. Start browsing with the Chrome extension or inject data via the Webhook API to build your Knowledge Graph.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ReactFlow
         nodes={nodes}
@@ -156,6 +186,6 @@ export default function GraphVisualizer() {
           color="rgba(148, 163, 184, 0.15)" 
         />
       </ReactFlow>
-    </div>
+    </motion.div>
   );
 }

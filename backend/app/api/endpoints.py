@@ -518,3 +518,48 @@ async def ingest_custom_data(request: CustomIngestionRequest):
     except Exception as e:
         logger.error(f"Error in custom ingestion API: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/analytics/activity")
+async def get_activity_heatmap():
+    """
+    Returns activity data for the last 90 days.
+    For hackathon purposes, this dynamically generates a seeded heatmap
+    and merges it with live recent_captures data for today.
+    """
+    import datetime
+    import random
+    
+    try:
+        activity = []
+        today = datetime.date.today()
+        
+        # Generate 90 days of seeded data
+        for i in range(89, -1, -1):
+            date = today - datetime.timedelta(days=i)
+            # Higher chance of 0 or 1, lower chance of 3 or 4
+            weight = random.choices([0, 1, 2, 3, 4], weights=[40, 30, 15, 10, 5])[0]
+            
+            # If it's today, base it on actual recent captures
+            if i == 0:
+                global recent_captures
+                capture_count = len(recent_captures)
+                if capture_count == 0:
+                    weight = 0
+                elif capture_count < 3:
+                    weight = 1
+                elif capture_count < 10:
+                    weight = 2
+                elif capture_count < 20:
+                    weight = 3
+                else:
+                    weight = 4
+                    
+            activity.append({
+                "date": date.isoformat(),
+                "count": weight
+            })
+            
+        return {"activity": activity}
+    except Exception as e:
+        logger.error(f"Error generating activity heatmap: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
