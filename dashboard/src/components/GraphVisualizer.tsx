@@ -69,7 +69,7 @@ export default function GraphVisualizer() {
   const fetchGraph = useCallback(async (daysAgo: number = 0) => {
     setLoading(true);
     try {
-      let url = 'http://localhost:8000/api/graph';
+      let url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/graph`;
       if (daysAgo > 0) {
         const targetDate = new Date();
         targetDate.setDate(targetDate.getDate() - daysAgo);

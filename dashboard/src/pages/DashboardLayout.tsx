@@ -195,7 +195,7 @@ function ChatComponent() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [...messages, userMsg] })
@@ -318,7 +318,7 @@ function LiveFeed() {
 
   const fetchCaptures = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/recent');
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/recent`);
       const data = await res.json();
       setCaptures(data.captures || []);
     } catch (e) {
@@ -386,7 +386,7 @@ function LiveFeed() {
   const handleSave = async () => {
     setStatus('loading');
     try {
-      const res = await fetch('http://localhost:8000/api/config/key', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/config/key`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: apiKey })
@@ -656,8 +656,8 @@ function InsightsPanel() {
     const fetchAnalytics = async () => {
       try {
         const [activityRes, clustersRes] = await Promise.all([
-          fetch('http://localhost:8000/api/analytics/activity'),
-          fetch('http://localhost:8000/api/analytics/clusters')
+          fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/analytics/activity`),
+          fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/analytics/clusters`)
         ]);
         
         if (activityRes.ok) {
@@ -679,7 +679,7 @@ function InsightsPanel() {
   const generateReport = async () => {
     setGeneratingReport(true);
     try {
-      const res = await fetch('http://localhost:8000/api/analytics/weekly-report');
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/analytics/weekly-report`);
       if (res.ok) {
         const data = await res.json();
         setReport(data.report);
@@ -884,7 +884,7 @@ function InsightsPanel() {
         <button 
           onClick={async () => {
             try {
-              const res = await fetch('http://localhost:8000/api/export');
+              const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/export`);
               const data = await res.json();
               const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
               const url = URL.createObjectURL(blob);
@@ -916,7 +916,7 @@ function TimelineComponent() {
   useEffect(() => {
     const fetchCaptures = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/captures/recent');
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/captures/recent`);
         if (response.ok) {
           const data = await response.json();
           setCaptures(data.captures || []);
@@ -1006,7 +1006,7 @@ function DataIngestionPanel() {
     
     setStatus('loading');
     try {
-      const res = await fetch('http://localhost:8000/api/ingest/custom', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/ingest/custom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1043,7 +1043,7 @@ function DataIngestionPanel() {
     formData.append('file', file);
     
     try {
-      const res = await fetch('http://localhost:8000/api/upload/pdf', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/upload/pdf`, {
         method: 'POST',
         body: formData
       });

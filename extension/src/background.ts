@@ -8,7 +8,7 @@ function connectWebSocket() {
   isConnecting = true;
   console.log("Kyro: Attempting to connect to backend via WebSocket...");
 
-  socket = new WebSocket('ws://localhost:8000/api/ws/capture');
+  socket = new WebSocket(`${(import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000').replace('http', 'ws')}/api/ws/capture`);
 
   socket.onopen = () => {
     console.log("Kyro: WebSocket connection established.");
@@ -88,7 +88,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "kyro-graph-prune") {
     console.log("Kyro: Running automated graph pruning schedule...");
-    fetch("http://localhost:8000/api/prune", {
+    fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/prune`, {
       method: "POST"
     })
     .then(res => res.json())
@@ -138,7 +138,7 @@ chrome.runtime.onMessage.addListener((message: any, _sender: chrome.runtime.Mess
 
   if (message.type === "RETRIEVE_CONTEXT") {
     console.log(`Kyro: Retrieving context for query: "${message.query}"`);
-    fetch(`http://localhost:8000/api/retrieve?q=${encodeURIComponent(message.query)}&deviceId=${deviceId || ''}`)
+    fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/retrieve?q=${encodeURIComponent(message.query)}&deviceId=${deviceId || ''}`)
       .then(res => res.json())
       .then(data => {
         sendResponse({ status: "success", memories: data.memories || [] });

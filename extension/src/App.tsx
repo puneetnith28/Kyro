@@ -21,11 +21,11 @@ function App() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const healthRes = await fetch('http://localhost:8000/health');
+        const healthRes = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/health`);
         if (healthRes.ok) setBackendConnected(true);
         else setBackendConnected(false);
 
-        const recentRes = await fetch('http://localhost:8000/api/recent');
+        const recentRes = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/recent`);
         if (recentRes.ok) {
           const data = await recentRes.json();
           setRecentCaptures(data.captures || []);
@@ -162,7 +162,7 @@ function App() {
                   onClick={(e) => {
                     e.stopPropagation();
                     setRecentCaptures(prev => prev.filter((_, index) => index !== i));
-                    if (item.id) fetch(`http://localhost:8000/api/memory/${item.id}`, { method: 'DELETE' }).catch(() => {});
+                    if (item.id) fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/memory/${item.id}`, { method: 'DELETE' }).catch(() => {});
                   }}
                   className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-red-500/10 text-zinc-500 hover:text-red-400 rounded-md transition-all"
                   title="Delete Memory"
