@@ -239,9 +239,26 @@ function App() {
 
       {/* Footer */}
       <footer className="glass-panel px-4 py-3 z-10 flex justify-between items-center border-t border-white/10 mt-auto rounded-t-xl">
-        <button className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors">
-          <Settings size={16} />
-        </button>
+        <div className="flex gap-2">
+          <button className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors" title="Settings">
+            <Settings size={16} />
+          </button>
+          <button 
+            onClick={() => {
+              chrome.alarms.get("kyro-graph-prune", (alarm) => {
+                if (alarm) {
+                  alert(`Pruning Alarm active! Next trigger: ${new Date(alarm.scheduledTime).toLocaleString()}`);
+                } else {
+                  alert('Pruning Alarm is not registered. Please reload the extension.');
+                }
+              });
+            }}
+            className="p-2 hover:bg-purple-500/10 rounded-lg text-purple-400 hover:text-purple-300 transition-colors" 
+            title="Check Graph Pruning Alarm"
+          >
+            <Database size={16} />
+          </button>
+        </div>
 
         <a
           href="http://localhost:5173"

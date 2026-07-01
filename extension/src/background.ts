@@ -80,6 +80,25 @@ chrome.runtime.onInstalled.addListener(() => {
       saveQueueToStorage(); // Clear storage as well
     }
   }, 3000);
+
+  // Set up daily graph pruning automation
+  chrome.alarms.create("kyro-graph-prune", { periodInMinutes: 24 * 60 });
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "kyro-graph-prune") {
+    console.log("Kyro: Running automated graph pruning schedule...");
+    fetch("http://localhost:8000/api/prune", {
+      method: "POST"
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log("Kyro: Graph pruning complete:", data);
+    })
+    .catch(err => {
+      console.error("Kyro: Automated graph pruning failed:", err);
+    });
+  }
 });
 
 function summarizePayload(payload: any) {
@@ -99,7 +118,12 @@ chrome.runtime.onMessage.addListener((message: any, _sender: chrome.runtime.Mess
   if (message.type === "CAPTURE_CONTEXT") {
     console.log("Kyro: Queueing context capture.");
     const optimizedData = summarizePayload(message.data);
-    optimizedData.deviceId = deviceId;
+    optimizedData.metadata = { 
+      deviceId: deviceId,
+      source: "chrome_extension",
+      capture_type: optimizedData.type,
+      domain: optimizedData.domain
+    };
     captureQueue.push(optimizedData);
     saveQueueToStorage(); // Persist immediately for offline mode
 
@@ -156,7 +180,12 @@ chrome.commands.onCommand.addListener(async (command) => {
 
         console.log("Kyro: Queueing manual capture:", payload);
         const optimizedPayload = summarizePayload(payload);
-        optimizedPayload.deviceId = deviceId;
+        optimizedPayload.metadata = { 
+          deviceId: deviceId,
+          source: "chrome_extension_manual",
+          capture_type: optimizedPayload.type,
+          domain: optimizedPayload.domain
+        };
         captureQueue.push(optimizedPayload);
         saveQueueToStorage();
 

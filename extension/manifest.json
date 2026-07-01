@@ -8,7 +8,8 @@
     "activeTab",
     "scripting",
     "webNavigation",
-    "cookies"
+    "cookies",
+    "alarms"
   ],
   "icons": {
     "16": "icons/icon16.png",

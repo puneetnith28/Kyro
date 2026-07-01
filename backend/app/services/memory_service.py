@@ -75,6 +75,8 @@ async def add_memory(context_data: dict):
     text = context_data.get("text", "")
     url = context_data.get("url", "")
     title = context_data.get("title", "")
+    domain = context_data.get("domain", "")
+    metadata = context_data.get("metadata", {})
     
     if not text:
         text = f"Visited: {title} at {url}"
@@ -84,10 +86,17 @@ async def add_memory(context_data: dict):
     # Run Semantic Chunking algorithm
     chunks = semantic_chunk_text(text, max_chunk_size=1000)
     
+    # Smart Source Formatting
+    source_parts = []
+    if title: source_parts.append(f"Source: {title}")
+    if domain: source_parts.append(f"Domain: {domain}")
+    if url: source_parts.append(f"URL: {url}")
+    source_tag = f"[{' | '.join(source_parts)}]" if source_parts else "[Source: Unknown]"
+    
     # Add chunks to cognee memory graph
     # By adding them to the same dataset with same metadata context, they remain linked
     for i, chunk in enumerate(chunks):
-        chunk_text = f"[Source: {title}] (Part {i+1}/{len(chunks)})\n{chunk}"
+        chunk_text = f"{source_tag} (Part {i+1}/{len(chunks)})\n{chunk}"
         await cognee.add(chunk_text, dataset_name=dataset_name)
     
     # Trigger cognitify to process added information into graph

@@ -14,7 +14,11 @@ if (!PUBLISHABLE_KEY) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY} syncHost="http://localhost:5175">
+      <ClerkProvider 
+        publishableKey={PUBLISHABLE_KEY} 
+        syncHost="http://localhost:5175"
+        allowedRedirectOrigins={[`chrome-extension://${chrome.runtime.id}`]}
+      >
         <App />
       </ClerkProvider>
     </ErrorBoundary>

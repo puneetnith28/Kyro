@@ -24,7 +24,8 @@ function sendToKyro(text: string) {
       title: `Gemini Prompt`,
       text: `User Prompt: ${text.trim()}`,
       domain: 'gemini.google.com',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      type: "chat_prompt"
     }
   });
   console.log("[Kyro] Intercepted Gemini prompt.");

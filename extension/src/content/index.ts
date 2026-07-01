@@ -32,7 +32,8 @@ function captureContext() {
     title,
     text: content,
     domain: window.location.hostname,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    type: "page_view"
   };
 
   chrome.runtime.sendMessage({
@@ -54,7 +55,9 @@ document.addEventListener('selectionchange', () => {
         text: selection,
         url: window.location.href,
         title: `Selection from: ${document.title}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        type: "selection",
+        domain: window.location.hostname
       }
     });
   }

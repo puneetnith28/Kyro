@@ -21,7 +21,8 @@ function sendToKyro(text: string) {
     title: `ChatGPT Prompt`,
     text: `User Prompt: ${text.trim()}`,
     domain: 'chatgpt.com',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    type: "chat_prompt"
   };
 
   chrome.runtime.sendMessage({

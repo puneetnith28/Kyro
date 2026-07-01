@@ -20,7 +20,8 @@ function sendToKyro(text: string) {
       title: `Perplexity Prompt`,
       text: `User Prompt: ${text.trim()}`,
       domain: 'perplexity.ai',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      type: "chat_prompt"
     }
   });
   console.log("[Kyro] Intercepted Perplexity prompt.");

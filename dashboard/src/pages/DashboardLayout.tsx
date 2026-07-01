@@ -83,6 +83,7 @@ export default function DashboardLayout() {
             <SidebarItem icon={<GitCommit size={16} />} label="Timeline" active={activeTab === 'Timeline'} onClick={() => { setActiveTab('Timeline'); if(window.innerWidth < 768) setSidebarOpen(false); }} />
             <SidebarItem icon={<Star size={16} />} label="Favorites" active={activeTab === 'Favorites'} onClick={() => { setActiveTab('Favorites'); if(window.innerWidth < 768) setSidebarOpen(false); }} />
             <SidebarItem icon={<BarChart2 size={16} />} label="Insights" active={activeTab === 'Insights'} onClick={() => { setActiveTab('Insights'); if(window.innerWidth < 768) setSidebarOpen(false); }} />
+            <SidebarItem icon={<DownloadCloud size={16} />} label="Upload Knowledge" active={activeTab === 'Upload Knowledge'} onClick={() => { setActiveTab('Upload Knowledge'); if(window.innerWidth < 768) setSidebarOpen(false); }} />
             <SidebarItem icon={<Settings size={16} />} label="Settings" active={activeTab === 'Settings'} onClick={() => { setActiveTab('Settings'); if(window.innerWidth < 768) setSidebarOpen(false); }} />
           </div>
 
@@ -162,6 +163,10 @@ export default function DashboardLayout() {
             
             {activeTab === 'Settings' && (
               <SettingsPanel />
+            )}
+
+            {activeTab === 'Upload Knowledge' && (
+              <DataIngestionPanel />
             )}
             
             {activeTab === 'Chat' && (
@@ -447,6 +452,7 @@ function CommandPalette({ isOpen, onClose, onSelectTab }: { isOpen: boolean, onC
     { id: 'chat', label: 'Go to Chat', icon: <MessageSquare size={16} />, action: () => onSelectTab('Chat') },
     { id: 'brain', label: 'Go to Brain Visualizer', icon: <Network size={16} />, action: () => onSelectTab('Brain') },
     { id: 'settings', label: 'Go to Settings', icon: <Settings size={16} />, action: () => onSelectTab('Settings') },
+    { id: 'upload', label: 'Upload Knowledge', icon: <DownloadCloud size={16} />, action: () => onSelectTab('Upload Knowledge') },
   ];
 
   const filtered = actions.filter(a => a.label.toLowerCase().includes(search.toLowerCase()));
@@ -800,23 +806,10 @@ function InsightsPanel() {
                 return (
                   <motion.div
                     key={cluster.concept}
-                    initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                    animate={{ 
-                      opacity: 1, 
-                      y: [0, -10, 0],
-                      scale: 1 
-                    }}
-                    transition={{ 
-                      opacity: { delay: i * 0.1, duration: 0.5 },
-                      scale: { delay: i * 0.1, duration: 0.5 },
-                      y: { 
-                        repeat: Infinity, 
-                        duration: 3 + (i % 3), 
-                        ease: "easeInOut",
-                        delay: i * 0.2
-                      }
-                    }}
-                    className={`rounded-full bg-gradient-to-r border font-medium whitespace-nowrap cursor-pointer hover:brightness-125 transition-all ${style.size} ${style.color}`}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.1, type: 'spring', bounce: 0.4 }}
+                    className={`rounded-full bg-gradient-to-br ${style.color} ${style.size} font-bold shadow-lg border backdrop-blur-sm whitespace-nowrap`}
                   >
                     {cluster.concept}
                   </motion.div>
@@ -990,3 +983,263 @@ function TimelineComponent() {
 }
 
 
+
+function DataIngestionPanel() {
+  const [ingestMode, setIngestMode] = useState<'text' | 'pdf'>('text');
+  
+  // Text Ingestion State
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [text, setText] = useState('');
+  
+  // PDF Ingestion State
+  const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Status
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [statusMsg, setStatusMsg] = useState('');
+
+  const handleTextSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !text) return;
+    
+    setStatus('loading');
+    try {
+      const res = await fetch('http://localhost:8000/api/ingest/custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          url: url || "manual://upload",
+          text,
+          type: "custom_api",
+          metadata: { manual_entry: true }
+        })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('success');
+        setStatusMsg(data.message);
+        setTitle('');
+        setUrl('');
+        setText('');
+      } else {
+        setStatus('error');
+        setStatusMsg(data.detail || 'Error uploading context.');
+      }
+    } catch (err: any) {
+      setStatus('error');
+      setStatusMsg(err.message || 'Network error.');
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!file) return;
+    setStatus('loading');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await fetch('http://localhost:8000/api/upload/pdf', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('success');
+        setStatusMsg(`${data.message} (${data.pages} pages extracted).`);
+        setFile(null);
+      } else {
+        setStatus('error');
+        setStatusMsg(data.detail || 'Error uploading PDF.');
+      }
+    } catch (err: any) {
+      setStatus('error');
+      setStatusMsg(err.message || 'Network error.');
+    }
+  };
+
+  return (
+    <div className="max-w-3xl space-y-6 mt-8 pb-12 animate-fade-in">
+      
+      {/* Header */}
+      <div className="glass-card rounded-2xl border border-white/5 overflow-hidden">
+        <div className="p-6 border-b border-white/5">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            <DownloadCloud className="text-blue-400" size={28} /> Upload Knowledge
+          </h2>
+          <p className="text-zinc-400 mt-2 text-[15px] leading-relaxed">
+            Manually feed data directly into Kyro's Cognee engine. This bypasses the extension and injects context directly into your Semantic Knowledge Graph.
+          </p>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex border-b border-white/5 px-6 pt-4 gap-6">
+          <button 
+            onClick={() => setIngestMode('text')}
+            className={`pb-3 text-sm font-semibold transition-colors border-b-2 ${ingestMode === 'text' ? 'text-blue-400 border-blue-400' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
+          >
+            Custom Text
+          </button>
+          <button 
+            onClick={() => setIngestMode('pdf')}
+            className={`pb-3 text-sm font-semibold transition-colors border-b-2 ${ingestMode === 'pdf' ? 'text-purple-400 border-purple-400' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
+          >
+            PDF Document
+          </button>
+        </div>
+        
+        <div className="p-6">
+          
+          {/* Status Message */}
+          <AnimatePresence>
+            {status !== 'idle' && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
+                  status === 'loading' ? 'bg-blue-500/10 border border-blue-500/20 text-blue-300' : 
+                  status === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-300' : 
+                  'bg-red-500/10 border border-red-500/20 text-red-300'
+                }`}
+              >
+                {status === 'loading' && <Sparkles className="animate-spin" size={18} />}
+                <span className="text-sm font-medium">{status === 'loading' ? 'Chunking and digesting into Cognee Graph...' : statusMsg}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Text Form */}
+          {ingestMode === 'text' && (
+            <form onSubmit={handleTextSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Document Title *</label>
+                <input 
+                  required
+                  type="text" 
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder="e.g. Q3 Roadmap Brainstorming"
+                  className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-zinc-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Source URL (Optional)</label>
+                <input 
+                  type="url" 
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-zinc-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Raw Text Content *</label>
+                <textarea 
+                  required
+                  value={text}
+                  onChange={e => setText(e.target.value)}
+                  placeholder="Paste your raw text, notes, or code here..."
+                  className="w-full h-48 bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all resize-none placeholder:text-zinc-600"
+                />
+              </div>
+              <div className="pt-2">
+                <button 
+                  type="submit"
+                  disabled={status === 'loading' || !title || !text}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.3)]"
+                >
+                  <DownloadCloud size={18} /> Ingest to Graph
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* PDF Form */}
+          {ingestMode === 'pdf' && (
+            <div className="space-y-6">
+              <div 
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const dropped = e.dataTransfer.files[0];
+                    if (dropped.type === 'application/pdf') {
+                      setFile(dropped);
+                    } else {
+                      setStatus('error');
+                      setStatusMsg('Please upload a valid PDF file.');
+                    }
+                  }
+                }}
+                className={`w-full h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all ${
+                  isDragging 
+                    ? 'border-purple-500 bg-purple-500/10 shadow-[inset_0_0_20px_rgba(168,85,247,0.2)]' 
+                    : file 
+                      ? 'border-green-500/50 bg-green-500/5' 
+                      : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5'
+                }`}
+              >
+                {!file ? (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 mb-4">
+                      <FileText size={32} />
+                    </div>
+                    <p className="text-zinc-300 font-medium mb-1">Drag and drop your PDF here</p>
+                    <p className="text-zinc-500 text-sm mb-4">Maximum file size: 10MB</p>
+                    
+                    <label className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-xl cursor-pointer transition-colors border border-white/5">
+                      Browse Files
+                      <input 
+                        type="file" 
+                        accept="application/pdf" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            setFile(e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </label>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mb-4 shadow-[0_0_20px_rgba(74,222,128,0.2)]">
+                      <FileText size={32} />
+                    </div>
+                    <p className="text-white font-medium mb-1">{file.name}</p>
+                    <p className="text-zinc-400 text-sm mb-4">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <button 
+                      onClick={() => setFile(null)}
+                      className="text-xs text-red-400 hover:text-red-300 underline underline-offset-2"
+                    >
+                      Remove File
+                    </button>
+                  </>
+                )}
+              </div>
+              
+              <div className="pt-2">
+                <button 
+                  onClick={handleFileUpload}
+                  disabled={status === 'loading' || !file}
+                  className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                >
+                  <Sparkles size={18} /> Parse & Ingest PDF
+                </button>
+              </div>
+            </div>
+          )}
+          
+        </div>
+      </div>
+    </div>
+  );
+}

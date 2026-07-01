@@ -23,7 +23,8 @@ function sendToKyro(text: string) {
       title: `Claude Prompt`,
       text: `User Prompt: ${text.trim()}`,
       domain: 'claude.ai',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      type: "chat_prompt"
     }
   });
   console.log("[Kyro] Intercepted Claude prompt.");
