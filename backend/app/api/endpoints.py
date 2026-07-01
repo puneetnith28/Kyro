@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Request, UploadFile, File
 from app.models.schemas import ContextCaptureRequest, ChatRequest, ChatResponse, ApiKeyRequest, GraphResponse, RecentCapturesResponse, FeedbackRequest, CustomIngestionRequest
 from app.services.memory_service import add_memory, search_memories, prune_stale_memories
-from app.services.cache_service import cache, KEY_ACTIVITY, KEY_CLUSTERS, KEY_REPORT, TTL_ACTIVITY, TTL_CLUSTERS, TTL_REPORT
+from app.services.cache_service import cache, KEY_ACTIVITY
 from app.core.database import persist_capture, fetch_recent_captures, is_db_connected
 import google.generativeai as genai
 import os
 import json
+import io
+import pypdf
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -394,7 +396,6 @@ async def trigger_email_ingestion():
         logger.error(f"Error triggering email sync: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-from fastapi import Request
 @router.post("/webhooks/github")
 async def github_webhook(request: Request):
     """
@@ -470,10 +471,6 @@ async def github_webhook(request: Request):
     except Exception as e:
         logger.error(f"Error processing GitHub webhook: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
-from fastapi import UploadFile, File
-import io
-import pypdf
 
 @router.post("/upload/pdf")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -554,7 +551,6 @@ async def get_activity_heatmap():
     and merges it with live recent_captures data for today.
     """
     import datetime
-    import random
     
     try:
         activity = []

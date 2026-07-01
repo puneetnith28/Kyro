@@ -7,7 +7,6 @@ Reports on success rate, throughput, and latency percentiles (p50, p90, p99).
 
 import asyncio
 import time
-import uuid
 import datetime
 import statistics
 import logging

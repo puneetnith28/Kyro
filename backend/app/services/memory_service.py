@@ -1,7 +1,5 @@
-import os
 from dotenv import load_dotenv
 import cognee
-import asyncio
 
 load_dotenv()
 
@@ -76,21 +74,24 @@ async def add_memory(context_data: dict):
     url = context_data.get("url", "")
     title = context_data.get("title", "")
     domain = context_data.get("domain", "")
-    metadata = context_data.get("metadata", {})
+
     
     if not text:
         text = f"Visited: {title} at {url}"
         
-    dataset_name = f"kyro_memories"
+    dataset_name = "kyro_memories"
     
     # Run Semantic Chunking algorithm
     chunks = semantic_chunk_text(text, max_chunk_size=1000)
     
     # Smart Source Formatting
     source_parts = []
-    if title: source_parts.append(f"Source: {title}")
-    if domain: source_parts.append(f"Domain: {domain}")
-    if url: source_parts.append(f"URL: {url}")
+    if title:
+        source_parts.append(f"Source: {title}")
+    if domain:
+        source_parts.append(f"Domain: {domain}")
+    if url:
+        source_parts.append(f"URL: {url}")
     source_tag = f"[{' | '.join(source_parts)}]" if source_parts else "[Source: Unknown]"
     
     # Add chunks to cognee memory graph
@@ -125,7 +126,6 @@ async def search_memories(query: str):
     Search the graph using a Hybrid Search Model (Vector Similarity + BM25 Keyword Search).
     Fuses the results using Reciprocal Rank Fusion (RRF) and applies RLHF weights.
     """
-    import math
     from rank_bm25 import BM25Okapi
     
     # 1. Vector Search Pass (Semantic Similarity)

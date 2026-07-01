@@ -66,14 +66,14 @@ async def fetch_unread_emails():
                                     payload = part.get_payload(decode=True)
                                     if payload:
                                         body += payload.decode()
-                                except:
+                                except Exception:
                                     pass
                     else:
                         try:
                             payload = msg.get_payload(decode=True)
                             if payload:
                                 body = payload.decode()
-                        except:
+                        except Exception:
                             pass
                             
                     # Clean the body (Strip HTML)

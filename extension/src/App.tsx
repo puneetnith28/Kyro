@@ -30,7 +30,7 @@ function App() {
           const data = await recentRes.json();
           setRecentCaptures(data.captures || []);
         }
-      } catch (e) {
+      } catch {
         setBackendConnected(false);
       }
     };
@@ -225,7 +225,7 @@ function App() {
                         });
                         alert(`Successfully queued ${count} historical conversations for processing!`);
                       }
-                    } catch (err) {
+                    } catch {
                       alert("Invalid JSON format.");
                     }
                   };

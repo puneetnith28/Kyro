@@ -1,6 +1,5 @@
 from pydantic import BaseModel, HttpUrl, Field
 from typing import Optional, List, Dict, Any
-from datetime import datetime
 
 class ContextCaptureRequest(BaseModel):
     url: HttpUrl = Field(..., description="The URL where the context was captured")

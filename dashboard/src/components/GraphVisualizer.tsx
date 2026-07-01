@@ -66,7 +66,7 @@ export default function GraphVisualizer() {
 
   const onConnect = useCallback((params: Connection) => setEdges((eds: Edge[]) => addEdge(params, eds)), [setEdges]);
 
-  const fetchGraph = async (daysAgo: number = 0) => {
+  const fetchGraph = useCallback(async (daysAgo: number = 0) => {
     setLoading(true);
     try {
       let url = 'http://localhost:8000/api/graph';
@@ -91,11 +91,11 @@ export default function GraphVisualizer() {
       console.error("Failed to load graph data", err);
     }
     setLoading(false);
-  };
+  }, [setNodes, setEdges]);
 
   useEffect(() => {
     fetchGraph(timeTravelDays);
-  }, [timeTravelDays]);
+  }, [timeTravelDays, fetchGraph]);
 
   return (
     <motion.div 
